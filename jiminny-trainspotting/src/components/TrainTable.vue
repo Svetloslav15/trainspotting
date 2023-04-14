@@ -26,7 +26,7 @@ export default {
             const hours = lastStation.getUTCHours();
             const minutes = lastStation.getUTCMinutes();
             const position = ((hours - 9) * 60 + minutes) * 5;
-            console.table([stations[stations.length - 1].time])
+
             return {
                 width: position + 'px'
             }
@@ -76,7 +76,8 @@ export default {
                 <p class="route">{{ train.route }}</p>
                 <!-- Timetable -->
                 <div class="timetable">
-                    <div v-bind:style="calculateRoadWidth(train.timetable)" src="/assets/road-texture.jpg" class="road"></div>
+                    <img src="/assets/road-texture.jpg" 
+                    v-bind:style="calculateRoadWidth(train.timetable)" class="road"/>
                     <!-- Station -->
                     <div class="stations">
                         <div class="station" v-bind:style="calculateStationPosition(station.time)"
