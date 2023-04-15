@@ -70,13 +70,22 @@ export default {
 
 <template>
     <div class="container">
-        <Header :is-moving="isMoving" :toggle-moving="toggleMoving" :current-time-in-minutes="this.currentTimeInMinutes"
+        <Header 
+            :is-moving="isMoving" 
+            :toggle-moving="toggleMoving" 
+            :current-time-in-minutes="this.currentTimeInMinutes"
             :format-trains-in-transit="formatTrainsInTransit" />
         <div class="table">
             <Heading />
-            <Rows :current-time-in-minutes="currentTimeInMinutes" :trains-positions="trainsPositions" :is-moving="isMoving"
-                :trains="this.trains" :calculate-position="this.calculatePosition" :trains-in-transit="this.trainsInTransit"
-                @updateCurrentTimeInMinutes="updateCurrentTimeInMinutes" @addTrainToTransit="addTrainToTransit" />
+            <Rows 
+                :current-time-in-minutes="currentTimeInMinutes" 
+                :trains-positions="trainsPositions" 
+                :is-moving="isMoving"
+                :trains="this.trains" 
+                :calculate-position="this.calculatePosition" 
+                :trains-in-transit="this.trainsInTransit"
+                @updateCurrentTimeInMinutes="updateCurrentTimeInMinutes" 
+                @addTrainToTransit="addTrainToTransit" />
         </div>
     </div>
 </template>

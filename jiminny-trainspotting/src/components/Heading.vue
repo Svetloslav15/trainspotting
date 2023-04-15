@@ -21,16 +21,19 @@
     justify-content: space-between;
 }
 
-.name, .route {
+.name,
+.route {
     width: 15%;
 }
 
-.timetable, .timetable-heading {
+.timetable,
+.timetable-heading {
     width: 50%;
     min-width: 630px;
 }
 
-.next-station, .train {
+.next-station,
+.train {
     width: 10%;
 }
 
@@ -41,7 +44,9 @@
 }
 
 @media (max-width: 1024px) {
-    .name-route, .next-station {
+
+    .name-route,
+    .next-station {
         display: none !important;
     }
 
@@ -61,14 +66,17 @@
         display: flex;
         padding-left: 10px;
     }
-    .name, .route {
+
+    .name,
+    .route {
         display: none;
     }
 }
 
 @media (max-width: 1024px) {
-    .name, .route {
+
+    .name,
+    .route {
         width: 22%;
     }
-}
-</style>
+}</style>

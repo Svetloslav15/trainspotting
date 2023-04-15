@@ -41,6 +41,7 @@ export default {
 .bold {
     font-weight: bold;
 }
+
 .header {
     display: flex;
     width: 100%;
@@ -76,6 +77,7 @@ export default {
 }
 
 @media (max-width: 1024px) {
+
     button,
     .name-route,
     .next-station,

@@ -73,7 +73,7 @@ export default {
                             position: currentTrain.timetable[currentTrain.nextStation.index + 1].position
                         }
                     }
-                    
+
                     // Move the train on the road
                     if (this.trains[trainIndex].lastStationPosition >= this.trainsPositions[trainIndex]) {
                         element.style.transform = `translateX(${this.trainsPositions[trainIndex]}px)`;
@@ -260,7 +260,8 @@ export default {
     .name-route {
         width: 20%;
         display: flex;
-        padding-left: 10px;;
+        padding-left: 10px;
+        ;
     }
 
     .name,
@@ -271,6 +272,7 @@ export default {
 
 
 @media (max-width: 1024px) {
+
     button,
     .name-route,
     .next-station,
@@ -295,11 +297,7 @@ export default {
         padding: 10px 5px;
     }
 
-    .route {
-    }
-
     .timetable-heading {
         min-width: unset !important;
     }
-}
-</style>
+}</style>
