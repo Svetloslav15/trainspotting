@@ -127,7 +127,7 @@ export default {
             </div>
             <div class="right-block">
                 <p><span class="bold">Trains in Transit: </span>: {{ formatTrainsInTransit() }}</p>
-                <p><span class="bold">Current Time: </span>: {{ formatCurrentTime() }}</p>
+                <p><span class="bold">Current Time: </span> {{ formatCurrentTime() }}</p>
             </div>
         </div>
         <!-- Header -->
@@ -135,15 +135,17 @@ export default {
         <div class="table">
             <!-- Heading -->
             <div class="heading">
-                <p>Name</p>
-                <p>Route</p>
-                <p>Timetable</p>
-                <p>Next Station</p>
-                <p>Train</p>
+                <p class="name-route">Name / Route</p>
+                <p class="name">Name</p>
+                <p class="route">Route</p>
+                <p class="timetable">Timetable</p>
+                <p class="next-station">Next Station</p>
+                <p class="train">Train</p>
             </div>
             <!-- Heading -->
             <!-- Row -->
             <div class="row" v-for="(train, index) in trains" :key="index">
+                <p class="name-route">{{ train.name }} / {{train.route}}</p>
                 <p class="name">{{ train.name }}</p>
                 <p class="route">{{ train.route }}</p>
                 <!-- Timetable -->
@@ -236,27 +238,26 @@ export default {
     background-color: #FAFAFA;
 }
 
-.table .row p:nth-child(1),
-.heading p:nth-child(1),
-.heading p:nth-child(2),
-.row p:nth-child(2) {
+.table .row .name,
+.heading .name,
+.heading .route,
+.row .route {
     width: 15%;
 }
 
-.table .row p:nth-child(3),
-.heading p:nth-child(3),
+.table .row .timetable,
+.heading .timetable,
 .row .timetable {
     width: 50%;
     min-width: 630px;
 }
 
-.table .row p:nth-child(4),
-.heading p:nth-child(4),
+.table .heading .next-station,
 .row .next-station {
     width: 10%;
 }
 
-.table .row p:nth-child(5),
+.table .row .train,
 .row .train {
     width: 10%;
 }
@@ -317,5 +318,22 @@ export default {
 .station .station-image {
     width: 20px;
     height: 16px;
+}
+
+@media (min-width: 1300px) {
+    .name-route {
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1299px) {
+    .name-route {
+        width: 20%;
+        display: flex;
+    }
+
+    .name, .route {
+        display: none;
+    }
 }
 </style>
