@@ -122,8 +122,8 @@ export default {
         <div class="header">
             <div class="left-block">
                 <h1 class="title">Jiminny Trainspotting</h1>
-                <button class="button" v-if="!isMoving" @click="startMoving">Start</button>
-                <button class="button" v-else @click="stopMoving">Stop</button>
+                <button type="button" v-if="!isMoving" @click="startMoving">Start</button>
+                <button type="button" v-else @click="stopMoving">Stop</button>
             </div>
             <div class="right-block">
                 <p><span class="bold">Trains in Transit: </span>: {{ formatTrainsInTransit() }}</p>
@@ -138,7 +138,7 @@ export default {
                 <p class="name-route">Name / Route</p>
                 <p class="name">Name</p>
                 <p class="route">Route</p>
-                <p class="timetable">Timetable</p>
+                <p class="timetable-heading">Timetable</p>
                 <p class="next-station">Next Station</p>
                 <p class="train">Train</p>
             </div>
@@ -162,10 +162,14 @@ export default {
                         </div>
                     </div>
                     <img ref="train" :data-index="index" src="/assets/train.svg" alt="" class="train-icon">
-
                     <!-- Station -->
                 </div>
                 <!-- Timetable -->
+                <!-- Timetable mobile -->
+                <div class="timetable-mobile">
+                    <p v-for="station in train.timetable">{{ formatDate(station.time) }}: {{station.station}}</p>
+                </div>
+                <!-- Timetable mobile -->
                 <p class="next-station">{{ train.nextStation.name }}</p>
                 <p class="train">{{ train.train.name }}</p>
             </div>
@@ -176,8 +180,16 @@ export default {
 </template>
 
 <style scoped>
+
+* {
+    font-weight: 600;
+}
 .bold {
     font-weight: bold;
+}
+
+.table {
+    box-shadow: 0px 5px 11px -1px rgba(0,0,0,0.75);
 }
 
 .container {
@@ -195,6 +207,7 @@ export default {
 .left-block {
     display: flex;
     align-items: center;
+    margin-bottom: 10px;;
 }
 
 .left-block .title {
@@ -247,6 +260,7 @@ export default {
 
 .table .row .timetable,
 .heading .timetable,
+.heading .timetable-heading,
 .row .timetable {
     width: 50%;
     min-width: 630px;
@@ -320,6 +334,14 @@ export default {
     height: 16px;
 }
 
+.timetable-mobile {
+    display: none;
+}
+
+.row p {
+    word-wrap: break-word;
+}
+
 @media (min-width: 1300px) {
     .name-route {
         display: none;
@@ -330,10 +352,41 @@ export default {
     .name-route {
         width: 20%;
         display: flex;
+        padding-left: 10px;;
     }
 
     .name, .route {
         display: none;
+    }
+}
+
+
+@media (max-width: 1024px) {
+    button, .name-route, .next-station, .timetable, .right-block {
+        display: none !important;
+    }
+
+    .timetable-mobile {
+        display: flex;
+        flex-direction: column;
+        width: 40%;
+    }
+
+    .row, .heading {
+        height: 100%;
+        justify-content: space-between;
+    }
+
+    .row {
+        padding: 10px 0;
+    }
+
+    .route {
+        width: 20px;
+    }
+
+    .timetable-heading {
+        min-width: unset !important;
     }
 }
 </style>
