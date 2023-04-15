@@ -2,31 +2,54 @@
 export default {
     data() {
         return {
-            trains: null
+            trains: null,
+            isMoving: false,
+            intervalId: null,
+            trainsPositions: [0, 0, 0, 0], //starting positions,
+            currentTimeInMinutes: 0,
+            trainsInTransit: [],
+            startingHour: 9,
+            minutesInOneHour: 60,
+            stepToMove: 5
         };
     },
     mounted() {
         fetch('http://localhost:3000/journeys')
             .then(response => response.json())
             .then(data => {
+                for (let train of data) {
+                    train.nextStation = {
+                        name: train.timetable[1].station,
+                        index: 1,
+                        position: this.calculatePosition(train.timetable[1])
+                    }
+
+                    for (let station of train.timetable) {
+                        station.position = this.calculatePosition(station);
+                    }
+
+                    train.lastStationPosition = this.calculatePosition(train.timetable[train.timetable.length - 1]);
+                }
                 this.trains = data;
             });
     },
     methods: {
         formatDate(value) {
-            return new Date(value).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                hour12: false ,
+            return new Date(value).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
                 timeZone: 'UTC'
             });
         },
+        calculatePosition(value) {
+            const stationTime = new Date(value.time);
+            const hours = stationTime.getUTCHours();
+            const minutes = stationTime.getUTCMinutes();
+            return ((hours - this.startingHour) * this.minutesInOneHour + minutes) * this.stepToMove;
+        },
         calculateRoadWidth(stations) {
-            const lastStation = new Date(stations[stations.length - 1].time);
-            const hours = lastStation.getUTCHours();
-            const minutes = lastStation.getUTCMinutes();
-            const position = ((hours - 9) * 60 + minutes) * 5;
-
+            const position = this.calculatePosition(stations[stations.length - 1])
             return {
                 width: position + 'px'
             }
@@ -35,11 +58,59 @@ export default {
             const date = new Date(value);
             const hours = date.getUTCHours();
             const minutes = date.getUTCMinutes();
-            const position = ((hours - 9) * 60 + minutes) * 5;
+            const position = ((hours - this.startingHour) * this.minutesInOneHour + minutes) * this.stepToMove;
 
             return {
                 left: position + 'px'
             }
+        },
+        startMoving() {
+            this.isMoving = true;
+            this.intervalId = setInterval(() => {
+                    for (let element of this.$refs.train) {
+                        const trainIndex = +element.getAttribute('data-index');
+                        this.trainsPositions[trainIndex] += this.stepToMove;
+
+                        const currentTrain = this.trains[trainIndex];
+
+                        if (currentTrain.nextStation.position === this.trainsPositions[trainIndex] &&
+                        currentTrain.timetable[currentTrain.nextStation.index + 1]) {
+                            currentTrain.nextStation = {
+                                name: currentTrain.timetable[currentTrain.nextStation.index + 1].station,
+                                index: currentTrain.nextStation.index + 1,
+                                position: currentTrain.timetable[currentTrain.nextStation.index + 1].position
+                            }
+                        }
+                        if (this.trains[trainIndex].lastStationPosition >= this.trainsPositions[trainIndex]) {
+                            element.style.transform = `translateX(${this.trainsPositions[trainIndex]}px)`;
+                        }
+                        else {
+                            // Move train in transit
+                            if (!this.trainsInTransit.includes(currentTrain.train.name)) {
+                                this.trainsInTransit.push(currentTrain.train.name);
+                            }
+                        }
+
+                    }
+                if (this.currentTimeInMinutes < 120) {
+                    this.currentTimeInMinutes++;
+                }
+                else {
+                    this.stopMoving();
+                }
+            }, 500);
+        },
+        stopMoving() {
+            this.isMoving = false;
+            clearInterval(this.intervalId);
+        },
+        formatCurrentTime() {
+            const hours = (Math.floor(this.currentTimeInMinutes / this.minutesInOneHour) + this.startingHour).toString().padStart(2, '0');
+            const minutes = (this.currentTimeInMinutes % this.minutesInOneHour).toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        },
+        formatTrainsInTransit() {
+            return this.trainsInTransit.length > 0 ? this.trainsInTransit.join(', ') : 'None'
         }
     }
 }
@@ -51,11 +122,12 @@ export default {
         <div class="header">
             <div class="left-block">
                 <h1 class="title">Jiminny Trainspotting</h1>
-                <button class="button">Start</button>
+                <button class="button" v-if="!isMoving" @click="startMoving">Start</button>
+                <button class="button" v-else @click="stopMoving">Stop</button>
             </div>
             <div class="right-block">
-                <p><span class="bold">Trains in Transit: </span>: asdadad</p>
-                <p><span class="bold">Current Time: </span>: 10:12</p>
+                <p><span class="bold">Trains in Transit: </span>: {{ formatTrainsInTransit() }}</p>
+                <p><span class="bold">Current Time: </span>: {{ formatCurrentTime() }}</p>
             </div>
         </div>
         <!-- Header -->
@@ -71,28 +143,28 @@ export default {
             </div>
             <!-- Heading -->
             <!-- Row -->
-            <div class="row" v-for="train in trains">
+            <div class="row" v-for="(train, index) in trains" :key="index">
                 <p class="name">{{ train.name }}</p>
                 <p class="route">{{ train.route }}</p>
                 <!-- Timetable -->
                 <div class="timetable">
-                    <img src="/assets/road-texture.jpg" 
-                    v-bind:style="calculateRoadWidth(train.timetable)" class="road"/>
+                    <img src="/assets/road-texture.jpg" v-bind:style="calculateRoadWidth(train.timetable)" class="road" />
                     <!-- Station -->
                     <div class="stations">
                         <div class="station" v-bind:style="calculateStationPosition(station.time)"
                             v-for="station in train.timetable">
                             <img src="/assets/station.svg" class="station-image" />
                             <div class="line"></div>
+
                             <span class="time">{{ formatDate(station.time) }}</span>
                         </div>
                     </div>
-                    <img src="/assets/train.svg" alt="" class="train">
+                    <img ref="train" :data-index="index" src="/assets/train.svg" alt="" class="train-icon">
 
                     <!-- Station -->
                 </div>
                 <!-- Timetable -->
-                <p class="next-station">Royston</p>
+                <p class="next-station">{{ train.nextStation.name }}</p>
                 <p class="train">{{ train.train.name }}</p>
             </div>
             <!-- Row -->
@@ -168,13 +240,14 @@ export default {
 .heading p:nth-child(1),
 .heading p:nth-child(2),
 .row p:nth-child(2) {
-    width: 20%;
+    width: 15%;
 }
 
 .table .row p:nth-child(3),
 .heading p:nth-child(3),
 .row .timetable {
-    width: 40%;
+    width: 50%;
+    min-width: 630px;
 }
 
 .table .row p:nth-child(4),
@@ -206,10 +279,10 @@ export default {
     top: -40px;
 }
 
-.timetable .train {
+.timetable .train-icon {
     position: absolute;
     top: 45%;
-    left: 18px;
+    left: 10px;
     width: 16px;
     height: 16px;
     background-color: white;
