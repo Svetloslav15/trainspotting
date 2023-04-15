@@ -2,9 +2,11 @@
 export default {
     data() {
         return {
+            trains: [],
             intervalId: null,
             startingHour: 9,
             minutesInOneHour: 60,
+            trainsPositions: [0, 0, 0, 0],
             stepToMove: 5,
             minutesToEndOfWorkingDay: 120,
             moving: false
@@ -12,8 +14,6 @@ export default {
     },
     props: {
         isMoving: Boolean,
-        trains: Array,
-        trainsPositions: Array,
         trainsInTransit: Array,
         calculatePosition: Function,
         currentTimeInMinutes: Number
@@ -27,6 +27,26 @@ export default {
                 this.stopMoving();
             }
         }
+    },
+    mounted() {
+        fetch('http://localhost:3000/journeys')
+            .then(response => response.json())
+            .then(data => {
+                for (let train of data) {
+                    train.nextStation = {
+                        name: train.timetable[1].station,
+                        index: 1,
+                        position: this.calculatePosition(train.timetable[1])
+                    }
+
+                    for (let station of train.timetable) {
+                        station.position = this.calculatePosition(station);
+                    }
+
+                    train.lastStationPosition = this.calculatePosition(train.timetable[train.timetable.length - 1]);
+                }
+                this.trains = data;
+            });
     },
     beforeUnmount() {
         clearInterval(this.intervalId)
@@ -89,7 +109,6 @@ export default {
                 }
                 if (this.currentTimeInMinutes < this.minutesToEndOfWorkingDay) {
                     this.$emit('updateCurrentTimeInMinutes');
-                    this.currentTimeInMinutes++;
                 }
                 else {
                     this.stopMoving();
@@ -103,7 +122,6 @@ export default {
 }
 </script>
 <template>
-    <!-- Row -->
     <div class="row" v-for="(train, index) in trains" :key="index">
         <p class="name-route">{{ train.name }} / {{ train.route }}</p>
         <p class="name">{{ train.name }}</p>

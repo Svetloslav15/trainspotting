@@ -6,10 +6,8 @@ import Rows from './Rows.vue';
 export default {
     data() {
         return {
-            trains: null,
             isMoving: false,
             intervalId: null,
-            trainsPositions: [0, 0, 0, 0], //starting positions,
             currentTimeInMinutes: 0,
             trainsInTransit: [],
             startingHour: 9,
@@ -17,26 +15,6 @@ export default {
             stepToMove: 5,
             myRef: []
         };
-    },
-    mounted() {
-        fetch('http://localhost:3000/journeys')
-            .then(response => response.json())
-            .then(data => {
-                for (let train of data) {
-                    train.nextStation = {
-                        name: train.timetable[1].station,
-                        index: 1,
-                        position: this.calculatePosition(train.timetable[1])
-                    }
-
-                    for (let station of train.timetable) {
-                        station.position = this.calculatePosition(station);
-                    }
-
-                    train.lastStationPosition = this.calculatePosition(train.timetable[train.timetable.length - 1]);
-                }
-                this.trains = data;
-            });
     },
     methods: {
         calculatePosition(value) {
@@ -79,9 +57,7 @@ export default {
             <Heading />
             <Rows 
                 :current-time-in-minutes="currentTimeInMinutes" 
-                :trains-positions="trainsPositions" 
                 :is-moving="isMoving"
-                :trains="this.trains" 
                 :calculate-position="this.calculatePosition" 
                 :trains-in-transit="this.trainsInTransit"
                 @updateCurrentTimeInMinutes="updateCurrentTimeInMinutes" 
@@ -98,7 +74,7 @@ export default {
 
 .container {
     width: 90%;
-    margin: 30px auto;
-    padding-top: 30px;
+    margin: 0 auto;
+    padding: 30px 0;
 }
 </style>
