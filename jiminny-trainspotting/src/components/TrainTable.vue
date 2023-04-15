@@ -1,4 +1,8 @@
 <script>
+import Header from './Header.vue';
+import Heading from './Heading.vue';
+import Rows from './Rows.vue';
+
 export default {
     data() {
         return {
@@ -10,7 +14,8 @@ export default {
             trainsInTransit: [],
             startingHour: 9,
             minutesInOneHour: 60,
-            stepToMove: 5
+            stepToMove: 5,
+            myRef: []
         };
     },
     mounted() {
@@ -34,359 +39,57 @@ export default {
             });
     },
     methods: {
-        formatDate(value) {
-            return new Date(value).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-                timeZone: 'UTC'
-            });
-        },
         calculatePosition(value) {
             const stationTime = new Date(value.time);
             const hours = stationTime.getUTCHours();
             const minutes = stationTime.getUTCMinutes();
             return ((hours - this.startingHour) * this.minutesInOneHour + minutes) * this.stepToMove;
         },
-        calculateRoadWidth(stations) {
-            const position = this.calculatePosition(stations[stations.length - 1])
-            return {
-                width: position + 'px'
-            }
-        },
-        calculateStationPosition(value) {
-            const date = new Date(value);
-            const hours = date.getUTCHours();
-            const minutes = date.getUTCMinutes();
-            const position = ((hours - this.startingHour) * this.minutesInOneHour + minutes) * this.stepToMove;
-
-            return {
-                left: position + 'px'
-            }
-        },
-        startMoving() {
-            this.isMoving = true;
-            this.intervalId = setInterval(() => {
-                    for (let element of this.$refs.train) {
-                        const trainIndex = +element.getAttribute('data-index');
-                        this.trainsPositions[trainIndex] += this.stepToMove;
-
-                        const currentTrain = this.trains[trainIndex];
-
-                        if (currentTrain.nextStation.position === this.trainsPositions[trainIndex] &&
-                        currentTrain.timetable[currentTrain.nextStation.index + 1]) {
-                            currentTrain.nextStation = {
-                                name: currentTrain.timetable[currentTrain.nextStation.index + 1].station,
-                                index: currentTrain.nextStation.index + 1,
-                                position: currentTrain.timetable[currentTrain.nextStation.index + 1].position
-                            }
-                        }
-                        if (this.trains[trainIndex].lastStationPosition >= this.trainsPositions[trainIndex]) {
-                            element.style.transform = `translateX(${this.trainsPositions[trainIndex]}px)`;
-                        }
-                        else {
-                            // Move train in transit
-                            if (!this.trainsInTransit.includes(currentTrain.train.name)) {
-                                this.trainsInTransit.push(currentTrain.train.name);
-                            }
-                        }
-
-                    }
-                if (this.currentTimeInMinutes < 120) {
-                    this.currentTimeInMinutes++;
-                }
-                else {
-                    this.stopMoving();
-                }
-            }, 500);
-        },
-        stopMoving() {
-            this.isMoving = false;
-            clearInterval(this.intervalId);
-        },
-        formatCurrentTime() {
-            const hours = (Math.floor(this.currentTimeInMinutes / this.minutesInOneHour) + this.startingHour).toString().padStart(2, '0');
-            const minutes = (this.currentTimeInMinutes % this.minutesInOneHour).toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
-        },
         formatTrainsInTransit() {
             return this.trainsInTransit.length > 0 ? this.trainsInTransit.join(', ') : 'None'
+        },
+        toggleMoving() {
+            this.isMoving = !this.isMoving;
+        },
+        updateCurrentTimeInMinutes() {
+            this.currentTimeInMinutes++;
+        },
+        addTrainToTransit(value) {
+            if (!this.trainsInTransit.includes(value)) {
+                this.trainsInTransit.push(value);
+            }
         }
+    },
+    components: {
+        Header,
+        Heading,
+        Rows
     }
 }
 </script>
 
 <template>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="left-block">
-                <h1 class="title">Jiminny Trainspotting</h1>
-                <button type="button" v-if="!isMoving" @click="startMoving">Start</button>
-                <button type="button" v-else @click="stopMoving">Stop</button>
-            </div>
-            <div class="right-block">
-                <p><span class="bold">Trains in Transit: </span>: {{ formatTrainsInTransit() }}</p>
-                <p><span class="bold">Current Time: </span> {{ formatCurrentTime() }}</p>
-            </div>
-        </div>
-        <!-- Header -->
-        <!-- Table -->
+        <Header :is-moving="isMoving" :toggle-moving="toggleMoving" :current-time-in-minutes="this.currentTimeInMinutes"
+            :format-trains-in-transit="formatTrainsInTransit" />
         <div class="table">
-            <!-- Heading -->
-            <div class="heading">
-                <p class="name-route">Name / Route</p>
-                <p class="name">Name</p>
-                <p class="route">Route</p>
-                <p class="timetable-heading">Timetable</p>
-                <p class="next-station">Next Station</p>
-                <p class="train">Train</p>
-            </div>
-            <!-- Heading -->
-            <!-- Row -->
-            <div class="row" v-for="(train, index) in trains" :key="index">
-                <p class="name-route">{{ train.name }} / {{train.route}}</p>
-                <p class="name">{{ train.name }}</p>
-                <p class="route">{{ train.route }}</p>
-                <!-- Timetable -->
-                <div class="timetable">
-                    <img src="/assets/road-texture.jpg" v-bind:style="calculateRoadWidth(train.timetable)" class="road" />
-                    <!-- Station -->
-                    <div class="stations">
-                        <div class="station" v-bind:style="calculateStationPosition(station.time)"
-                            v-for="station in train.timetable">
-                            <img src="/assets/station.svg" class="station-image" />
-                            <div class="line"></div>
-
-                            <span class="time">{{ formatDate(station.time) }}</span>
-                        </div>
-                    </div>
-                    <img ref="train" :data-index="index" src="/assets/train.svg" alt="" class="train-icon">
-                    <!-- Station -->
-                </div>
-                <!-- Timetable -->
-                <!-- Timetable mobile -->
-                <div class="timetable-mobile">
-                    <p v-for="station in train.timetable">{{ formatDate(station.time) }}: {{station.station}}</p>
-                </div>
-                <!-- Timetable mobile -->
-                <p class="next-station">{{ train.nextStation.name }}</p>
-                <p class="train">{{ train.train.name }}</p>
-            </div>
-            <!-- Row -->
+            <Heading />
+            <Rows :current-time-in-minutes="currentTimeInMinutes" :trains-positions="trainsPositions" :is-moving="isMoving"
+                :trains="this.trains" :calculate-position="this.calculatePosition" :trains-in-transit="this.trainsInTransit"
+                @updateCurrentTimeInMinutes="updateCurrentTimeInMinutes" @addTrainToTransit="addTrainToTransit" />
         </div>
-        <!-- Table -->
     </div>
 </template>
 
 <style scoped>
-
-* {
-    font-weight: 600;
-}
-.bold {
-    font-weight: bold;
-}
-
 .table {
-    box-shadow: 0px 5px 11px -1px rgba(0,0,0,0.75);
+    width: 100%;
+    box-shadow: 0px 5px 11px -1px rgba(0, 0, 0, 0.75);
 }
 
 .container {
     width: 90%;
     margin: 30px auto;
     padding-top: 30px;
-}
-
-.header {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-}
-
-.left-block {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;;
-}
-
-.left-block .title {
-    font-size: 30px;
-}
-
-.left-block button {
-    display: inline;
-    height: fit-content;
-    margin-left: 1rem;
-}
-
-.right-block {
-    display: flex;
-    align-self: center;
-}
-
-.right-block p {
-    margin: 0 5px;
-}
-
-.table {
-    width: 100%;
-}
-
-.table .heading {
-    display: flex;
-    color: white;
-    background-color: #EE3584;
-    padding: 10px;
-    width: 100%;
-}
-
-.row {
-    display: flex;
-    height: 150px;
-    align-items: center;
-}
-
-.row:nth-child(odd) {
-    background-color: #FAFAFA;
-}
-
-.table .row .name,
-.heading .name,
-.heading .route,
-.row .route {
-    width: 15%;
-}
-
-.table .row .timetable,
-.heading .timetable,
-.heading .timetable-heading,
-.row .timetable {
-    width: 50%;
-    min-width: 630px;
-}
-
-.table .heading .next-station,
-.row .next-station {
-    width: 10%;
-}
-
-.table .row .train,
-.row .train {
-    width: 10%;
-}
-
-.row .name {
-    padding-left: 10px;
-}
-
-.stations {
-    display: flex;
-    position: relative;
-    top: 8px;
-}
-
-.timetable .station {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: absolute;
-    top: -40px;
-}
-
-.timetable .train-icon {
-    position: absolute;
-    top: 45%;
-    left: 10px;
-    width: 16px;
-    height: 16px;
-    background-color: white;
-    padding: 1px;
-    border-radius: 50%;
-}
-
-.road {
-    background-image: url(/assets/road-texture.jpg);
-    background-repeat: repeat-y;
-    width: 506px;
-    height: 16px;
-    position: absolute;
-    top: 45%;
-    left: 18px;
-    border: 1px solid;
-    background-size: 504px 19px;
-    background-position-y: center;
-}
-
-.station .line {
-    width: 1px;
-    background-color: black;
-    height: 24px;
-    margin: 12px 0;
-}
-
-.station .time {
-    transform: rotate(-90deg);
-}
-
-.station .station-image {
-    width: 20px;
-    height: 16px;
-}
-
-.timetable-mobile {
-    display: none;
-}
-
-.row p {
-    word-wrap: break-word;
-}
-
-@media (min-width: 1300px) {
-    .name-route {
-        display: none;
-    }
-}
-
-@media (min-width: 1024px) and (max-width: 1299px) {
-    .name-route {
-        width: 20%;
-        display: flex;
-        padding-left: 10px;;
-    }
-
-    .name, .route {
-        display: none;
-    }
-}
-
-
-@media (max-width: 1024px) {
-    button, .name-route, .next-station, .timetable, .right-block {
-        display: none !important;
-    }
-
-    .timetable-mobile {
-        display: flex;
-        flex-direction: column;
-        width: 40%;
-    }
-
-    .row, .heading {
-        height: 100%;
-        justify-content: space-between;
-    }
-
-    .row {
-        padding: 10px 0;
-    }
-
-    .route {
-        width: 20px;
-    }
-
-    .timetable-heading {
-        min-width: unset !important;
-    }
 }
 </style>
